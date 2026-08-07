@@ -1,0 +1,21 @@
+Package: zzcondpower
+Title: Exact Conditional Power for Two-Arm Trials with Binary Outcomes
+Version: 0.1.0
+Authors@R:
+    person(given = "Ronald G.", family = "Thomas", email = "rgthomas@ucsd.edu", role = c("aut", "cre"))
+Description: Exact stochastic curtailment calculations for interim
+    monitoring of two-arm randomized clinical trials whose final
+    analysis is the one-sided Fisher exact test. Computes the exact
+    rejection region and its conditional power by enumeration under
+    simultaneous entry, extends the calculation to staggered entry
+    and censored time-to-event follow-up through an exact
+    Poisson-binomial formulation with subject-specific event
+    probabilities, and provides the normal-approximation conditional
+    power in the Halperin tradition for comparison, together with
+    exact sample-size search and design-grid comparison utilities.
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Suggests:
+    tinytest (>= 1.4.0)
+Config/roxygen2/version: 8.0.0
