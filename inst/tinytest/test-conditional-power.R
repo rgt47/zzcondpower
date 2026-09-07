@@ -57,3 +57,43 @@ mc <- mean(region[cbind(x_final + 1, y_final + 1)])
 mc_se <- sqrt(mc * (1 - mc) / n_sim)
 expect_true(abs(exact - mc) < 4 * mc_se,
             info = "exact value within 4 SE of Monte Carlo")
+
+## --- Regressions from the 2026-09 code review -------------------------
+
+## A precomputed `region` must not silently override `alpha`. Before the
+## check was added, passing a region built at 0.05 while requesting 0.01
+## returned the 0.05 answer with no indication.
+reg05 <- fisher_rejection_region(60, alpha = 0.05)
+expect_error(
+  exact_conditional_power(60, 2, 5, 0.05, 0.12, alpha = 0.01,
+                          region = reg05)
+)
+expect_equal(
+  exact_conditional_power(60, 2, 5, 0.05, 0.12, alpha = 0.05,
+                          region = reg05),
+  exact_conditional_power(60, 2, 5, 0.05, 0.12, alpha = 0.05)
+)
+
+## Zero pooled variance is refused rather than returning NaN. Zero events
+## in both arms is the expected early state of a rare-event trial.
+expect_error(halperin_conditional_power(371, 48.8, 0, 0))
+expect_error(halperin_conditional_power(371, 48.8, 1, 1))
+
+## The asymptotic and exact drivers must agree at the degenerate corners.
+## The all-events corner previously returned a fabricated 0.0386 because
+## the pooled variance was floored at .Machine$double.eps.
+ga <- conditional_power_grid(60, 8, alpha = 0.05, driver = "asymptotic")
+ge <- conditional_power_grid(60, 8, alpha = 0.05, driver = "exact")
+expect_equal(ga[1, 1], ge[1, 1])
+expect_equal(ga[9, 9], ge[9, 9])
+expect_false(anyNA(ga))
+
+## The rejection region agrees with stats::fisher.test, one-sided.
+reg <- fisher_rejection_region(12, alpha = 0.05)
+expect_true(all(vapply(0:12, function(x) {
+  all(vapply(0:12, function(y) {
+    p <- stats::fisher.test(matrix(c(x, 12 - x, y, 12 - y), 2, 2),
+                            alternative = "less")$p.value
+    identical(p <= 0.05, reg[x + 1, y + 1])
+  }, logical(1)))
+}, logical(1))))

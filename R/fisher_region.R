@@ -61,3 +61,39 @@ exact_fisher_power <- function(n, p_treatment, p_control,
   py <- stats::dbinom(0:n, n, p_control)
   sum(outer(px, py)[region])
 }
+
+#' Validate a supplied rejection region against its intended use
+#'
+#' Internal helper. A region built by [fisher_rejection_region()]
+#' records the `n` and `alpha` it was constructed with. When a caller
+#' supplies a precomputed region, those attributes are checked against
+#' the arguments of the call, so that a region built at one
+#' significance level cannot silently be used at another.
+#'
+#' @param region A rejection region, or `NULL`.
+#' @param n Integer. Number of subjects per arm requested by the
+#'   caller.
+#' @param alpha Numeric. One-sided significance level requested by the
+#'   caller.
+#'
+#' @return `region` unchanged, invisibly, if it is consistent with `n`
+#'   and `alpha`. Errors otherwise.
+#' @keywords internal
+check_region <- function(region, n, alpha) {
+  if (is.null(region)) {
+    return(invisible(NULL))
+  }
+  if (nrow(region) != n + 1L) {
+    stop("`region` is ", nrow(region), " x ", ncol(region),
+         " but `n` = ", n, " requires ", n + 1L, " rows.",
+         call. = FALSE)
+  }
+  ra <- attr(region, "alpha")
+  if (!is.null(ra) && !isTRUE(all.equal(ra, alpha))) {
+    stop("`region` was built with alpha = ", ra,
+         " but alpha = ", alpha, " was requested. Supplying a region ",
+         "does not override `alpha`; rebuild the region or drop the ",
+         "argument.", call. = FALSE)
+  }
+  invisible(region)
+}

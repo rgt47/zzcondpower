@@ -55,6 +55,16 @@ halperin_conditional_power <- function(n, m, p_treatment,
   }
   p_bar <- (p_treatment + p_control) / 2
   sigma2 <- p_bar * (1 - p_bar)
+  # Both arms at 0 or both at 1 give a degenerate pooled variance, and
+  # the information terms below would be Inf, returning NaN silently.
+  # Zero events in both arms is the expected early state of a
+  # rare-event trial, so this is worth refusing explicitly.
+  if (sigma2 <= 0) {
+    stop("Pooled event rate is ", p_bar, ", giving zero variance; ",
+         "the normal approximation is undefined. Use ",
+         "`exact_conditional_power()` for degenerate interim data.",
+         call. = FALSE)
+  }
   info_interim <- m / (2 * sigma2)
   info_final <- n / (2 * sigma2)
   info_remaining <- info_final - info_interim

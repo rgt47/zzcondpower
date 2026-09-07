@@ -27,14 +27,22 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
   stopifnot(m > 0, m < n)
   if (driver == "asymptotic") {
     grid <- outer(0:m, 0:m, function(x1, y1) {
+      # The normal approximation is undefined where the pooled interim
+      # rate is 0 or 1, because the pooled variance vanishes. Both
+      # corners are degenerate in the same direction: with no events in
+      # either arm, or events in every subject of both arms, the final
+      # table cannot fall in the rejection region. Return 0 there, which
+      # is what the exact driver computes.
+      p_bar <- (x1 + y1) / (2 * m)
       ifelse(
-        x1 + y1 == 0, 0,
+        p_bar * (1 - p_bar) <= 0, 0,
         halperin_conditional_power_vec(n, m, x1 / m, y1 / m,
                                        alpha)
       )
     })
     return(grid)
   }
+  check_region(region, n, alpha)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }
@@ -59,7 +67,11 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
 halperin_conditional_power_vec <- function(n, m, p_treatment,
                                            p_control, alpha) {
   p_bar <- (p_treatment + p_control) / 2
-  sigma2 <- pmax(p_bar * (1 - p_bar), .Machine$double.eps)
+  # Deliberately not floored. Flooring at .Machine$double.eps turned a
+  # degenerate input into a finite, plausible, wrong number instead of
+  # NaN; callers must screen the degenerate corners themselves, as
+  # conditional_power_grid() does.
+  sigma2 <- p_bar * (1 - p_bar)
   info_interim <- m / (2 * sigma2)
   info_final <- n / (2 * sigma2)
   info_remaining <- info_final - info_interim
@@ -115,6 +127,7 @@ monitored_operating_characteristics <- function(n, m, tau,
                                                 region = NULL,
                                                 cp_grid = NULL) {
   driver <- match.arg(driver)
+  check_region(region, n, alpha)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }
@@ -161,6 +174,7 @@ monitored_size <- function(n, m, tau, null_rates, alpha = 0.05,
                            driver = c("exact", "asymptotic"),
                            region = NULL, cp_grid = NULL) {
   driver <- match.arg(driver)
+  check_region(region, n, alpha)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }

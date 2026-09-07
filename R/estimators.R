@@ -31,12 +31,31 @@ estimate_partitioned_rates <- function(x1, n_completed, n_on_study,
   stopifnot(t > 0, entry_period > 0, follow_up > 0,
             all(x1 >= 0), all(n_on_study >= 0),
             all(n_completed >= 0))
+  # Past entry_period + follow_up the last subject has completed
+  # follow-up, so there is no remaining exposure to partition. The
+  # arithmetic below would give a mean exposure exceeding follow_up and
+  # hence a negative p2_hat, which propagates as a negative event
+  # probability into the conditional power functions.
+  if (t > entry_period + follow_up) {
+    stop("`t` = ", t, " is past entry_period + follow_up = ",
+         entry_period + follow_up, ", when all subjects have completed ",
+         "follow-up. There is no future exposure to partition, so ",
+         "conditional power is not defined at this time.", call. = FALSE)
+  }
   t_bar <- (min(t, entry_period) + max(0, t - follow_up)) / 2
   mean_exposure <- t - t_bar
   lambda_hat <- x1 /
     (n_completed + n_on_study * mean_exposure / follow_up)
   p1_hat <- lambda_hat * mean_exposure / follow_up
   p2_hat <- lambda_hat - p1_hat
+  # At t == entry_period + follow_up the exposure fraction is exactly 1
+  # in real arithmetic, so p2_hat is 0. In floating point it lands a few
+  # ulp below, and the negative value is then rejected by the
+  # `gamma >= 0` guard downstream. Clamp the rounding error, but only
+  # the rounding error: anything materially negative is a real problem
+  # and should still surface.
+  tiny <- 8 * .Machine$double.eps * pmax(lambda_hat, 1)
+  p2_hat[p2_hat < 0 & p2_hat > -tiny] <- 0
   list(lambda_hat = lambda_hat, p1_hat = p1_hat, p2_hat = p2_hat,
        t_bar = t_bar)
 }

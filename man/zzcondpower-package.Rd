@@ -8,6 +8,43 @@
 \description{
 Exact stochastic curtailment calculations for interim monitoring of two-arm randomized clinical trials whose final analysis is the one-sided Fisher exact test. Computes the exact rejection region and its conditional power by enumeration under simultaneous entry, extends the calculation to staggered entry and censored time-to-event follow-up through an exact Poisson-binomial formulation with subject-specific event probabilities, and provides the normal-approximation conditional power in the Halperin tradition for comparison, together with exact sample-size search and design-grid comparison utilities. Also provides an exact forward-recursion conditional-power calculation for the discrete-visit log-rank (Mantel-Haenszel) statistic, a moment-matched normal approximation using the recursion's exact first two moments, and exact and frailty-conditioned conditional-power calculations for the conditional Poisson (Przyborowski-Wilenski) final test under gamma-Poisson (negative-binomial) heterogeneity.
 }
+\section{Significance level conventions}{
+
+The \code{alpha} default is not uniform across the package, because the
+two families of methods follow the conventions of their respective
+source literatures.
+
+\itemize{
+\item The Fisher exact family (\code{\link[=exact_conditional_power]{exact_conditional_power()}},
+\code{\link[=exact_conditional_power_pb]{exact_conditional_power_pb()}}, \code{\link[=fisher_rejection_region]{fisher_rejection_region()}},
+\code{\link[=exact_fisher_power]{exact_fisher_power()}}, \code{\link[=halperin_conditional_power]{halperin_conditional_power()}}) and the
+monitoring utilities (\code{\link[=conditional_power_grid]{conditional_power_grid()}},
+\code{\link[=monitored_operating_characteristics]{monitored_operating_characteristics()}}, \code{\link[=monitored_size]{monitored_size()}})
+default to \code{alpha = 0.05}, one-sided.
+\item The log-rank family
+(\code{\link[=logrank_exact_conditional_power]{logrank_exact_conditional_power()}},
+\code{\link[=logrank_moment_conditional_power]{logrank_moment_conditional_power()}}) and the conditional
+Poisson family (\code{\link[=count_conditional_power_poisson]{count_conditional_power_poisson()}},
+\code{\link[=count_conditional_power_nb]{count_conditional_power_nb()}}) default to \code{alpha = 0.025},
+one-sided, the equivalent of a two-sided 0.05 test.
+}
+
+Both members of each pair agree with each other, so an exact result
+and its approximation are always comparable. Results are \strong{not}
+comparable across families unless \code{alpha} is set explicitly. When
+comparing a Fisher-based conditional power against a log-rank one,
+pass \code{alpha} to both rather than relying on the defaults.
+}
+
+\section{Precomputed rejection regions}{
+
+Several functions accept a \code{region} argument to avoid rebuilding the
+rejection region across repeated calls. A region records the \code{n} and
+\code{alpha} it was built with, and supplying one that disagrees with the
+arguments of the call is an error rather than a silent override.
+Supplying a region does not change the significance level.
+}
+
 \seealso{
 Useful links:
 \itemize{

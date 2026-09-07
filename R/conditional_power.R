@@ -93,10 +93,10 @@ exact_conditional_power_pb <- function(n, x1, y1, q_treatment,
                                        region = NULL) {
   stopifnot(length(q_treatment) == n - x1,
             length(q_control) == n - y1)
+  check_region(region, n, alpha)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }
-  stopifnot(nrow(region) == n + 1L)
   fx <- pois_binom_pmf(q_treatment)
   fy <- pois_binom_pmf(q_control)
   mass <- outer(fx, fy)
