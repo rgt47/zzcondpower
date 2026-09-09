@@ -14,3 +14,4 @@
 ^LICENSE$
 ^CITATION\.cff$
 ^zzcollab\.yaml$
+^cran-comments\.md$

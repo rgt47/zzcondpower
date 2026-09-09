@@ -1,6 +1,6 @@
 Package: zzcondpower
 Title: Exact Conditional Power for Two-Arm Trials with Binary Outcomes
-Version: 0.3.0
+Version: 0.4.0
 Authors@R:
     person(given = "Ronald G.", family = "Thomas", email = "rgthomas@ucsd.edu",
            role = c("aut", "cre"),
