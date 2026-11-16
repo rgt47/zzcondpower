@@ -66,9 +66,18 @@ exact_fisher_power <- function(n, p_treatment, p_control,
 #'
 #' Internal helper. A region built by [fisher_rejection_region()]
 #' records the `n` and `alpha` it was constructed with. When a caller
-#' supplies a precomputed region, those attributes are checked against
-#' the arguments of the call, so that a region built at one
-#' significance level cannot silently be used at another.
+#' supplies a precomputed region, its dimensions and those attributes
+#' are checked against the arguments of the call, so that a region
+#' built for one design or significance level cannot silently be used
+#' for another.
+#'
+#' A region that is not a logical `(n + 1) x (n + 1)` matrix, or one whose
+#' recorded attributes disagree with the call, is an error. A region
+#' that lacks some or all of the attributes (built by hand, or one
+#' whose attributes were dropped, for example by subsetting or
+#' `matrix()`) cannot be checked; it is accepted with a warning, and
+#' the returned copy is stamped with the requested values so that
+#' nested calls do not warn again.
 #'
 #' @param region A rejection region, or `NULL`.
 #' @param n Integer. Number of subjects per arm requested by the
@@ -76,24 +85,55 @@ exact_fisher_power <- function(n, p_treatment, p_control,
 #' @param alpha Numeric. One-sided significance level requested by the
 #'   caller.
 #'
-#' @return `region` unchanged, invisibly, if it is consistent with `n`
-#'   and `alpha`. Errors otherwise.
+#' @return `region`, invisibly, with any missing attributes filled in
+#'   from the call. `NULL` if `region` is `NULL`. Errors on mismatch.
 #' @keywords internal
 check_region <- function(region, n, alpha) {
   if (is.null(region)) {
     return(invisible(NULL))
   }
-  if (nrow(region) != n + 1L) {
-    stop("`region` is ", nrow(region), " x ", ncol(region),
-         " but `n` = ", n, " requires ", n + 1L, " rows.",
+  if (!is.matrix(region) || nrow(region) != n + 1L ||
+      ncol(region) != n + 1L) {
+    stop("`region` must be an (n + 1) x (n + 1) matrix; with `n` = ",
+         n, " that is ", n + 1L, " x ", n + 1L, ".", call. = FALSE)
+  }
+  # A numeric 0/1 matrix would be used as positional indices by
+  # `mass[region]`, giving a silently wrong answer rather than an error.
+  if (!is.logical(region)) {
+    stop("`region` must be a logical matrix, as returned by ",
+         "fisher_rejection_region(); got type '", typeof(region), "'.",
          call. = FALSE)
   }
-  ra <- attr(region, "alpha")
-  if (!is.null(ra) && !isTRUE(all.equal(ra, alpha))) {
-    stop("`region` was built with alpha = ", ra,
-         " but alpha = ", alpha, " was requested. Supplying a region ",
-         "does not override `alpha`; rebuild the region or drop the ",
-         "argument.", call. = FALSE)
+  requested <- list(n = n, alpha = alpha)
+  recorded <- lapply(names(requested), function(nm) {
+    attr(region, nm, exact = TRUE)
+  })
+  names(recorded) <- names(requested)
+  present <- !vapply(recorded, is.null, logical(1))
+  checkable <- names(requested)[present]
+  agrees <- vapply(checkable, function(nm) {
+    isTRUE(all.equal(recorded[[nm]], requested[[nm]]))
+  }, logical(1))
+  mismatched <- checkable[!agrees]
+  if (length(mismatched) > 0L) {
+    detail <- vapply(mismatched, function(nm) {
+      paste0(nm, " = ", recorded[[nm]], " (requested ",
+             requested[[nm]], ")")
+    }, character(1))
+    stop("`region` was built with ", paste(detail, collapse = ", "),
+         ". Supplying a region does not override `n` or `alpha`; ",
+         "rebuild the region or drop the argument.", call. = FALSE)
+  }
+  if (!all(present)) {
+    warning("`region` does not record ",
+            paste(names(requested)[!present], collapse = ", "),
+            ", so it cannot be checked against the call. Assuming it ",
+            "was built for the requested design; rebuild it with ",
+            "fisher_rejection_region() to enable the check.",
+            call. = FALSE)
+    for (nm in names(requested)[!present]) {
+      attr(region, nm) <- requested[[nm]]
+    }
   }
   invisible(region)
 }

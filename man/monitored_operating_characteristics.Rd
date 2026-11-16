@@ -34,7 +34,11 @@ probability used for the enumeration.}
 
 \item{driver}{Character. \code{'exact'} or \code{'asymptotic'}.}
 
-\item{region}{Optional precomputed rejection region.}
+\item{region}{Optional precomputed rejection region from
+\code{\link[=fisher_rejection_region]{fisher_rejection_region()}}, checked against \code{n} and \code{alpha} as
+described for \code{\link[=exact_conditional_power]{exact_conditional_power()}}. In
+\code{conditional_power_grid()} it is validated but not used when
+\code{driver = 'asymptotic'}.}
 
 \item{cp_grid}{Optional precomputed matrix from
 \code{\link[=conditional_power_grid]{conditional_power_grid()}}; supplying it avoids recomputation

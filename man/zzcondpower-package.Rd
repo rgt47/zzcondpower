@@ -41,8 +41,12 @@ pass \code{alpha} to both rather than relying on the defaults.
 Several functions accept a \code{region} argument to avoid rebuilding the
 rejection region across repeated calls. A region records the \code{n} and
 \code{alpha} it was built with, and supplying one that disagrees with the
-arguments of the call is an error rather than a silent override.
-Supplying a region does not change the significance level.
+arguments of the call is an error rather than a silent override, as
+is a region that is not a logical \verb{(n + 1) x (n + 1)} matrix. A region
+that lacks these attributes (built by hand, or one whose attributes
+were dropped, for example by subsetting or \code{matrix()}) cannot be
+checked and is accepted with a warning. Supplying a region does not
+change the significance level.
 
 The same applies to the \code{cp_grid} argument of
 \code{\link[=monitored_operating_characteristics]{monitored_operating_characteristics()}} and \code{\link[=monitored_size]{monitored_size()}}. A

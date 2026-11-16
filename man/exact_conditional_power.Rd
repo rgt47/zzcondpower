@@ -28,7 +28,12 @@ Fisher exact test.}
 
 \item{region}{Optional precomputed rejection region from
 \code{\link[=fisher_rejection_region]{fisher_rejection_region()}}; supplying it avoids
-reconstruction across repeated calls.}
+reconstruction across repeated calls. It must have been built
+with the same \code{n} and \code{alpha} as the call: a region that is not a
+logical \verb{(n + 1) x (n + 1)} matrix, or whose recorded values
+disagree, is an
+error, and a region that does not record them (built by hand or
+with its attributes dropped) is accepted with a warning.}
 }
 \value{
 The conditional power, a single numeric value.

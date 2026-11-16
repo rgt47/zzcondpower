@@ -13,7 +13,11 @@
 #'   interim analysis, `0 < m < n`.
 #' @param alpha Numeric. One-sided significance level.
 #' @param driver Character. `'exact'` or `'asymptotic'`.
-#' @param region Optional precomputed rejection region.
+#' @param region Optional precomputed rejection region from
+#'   [fisher_rejection_region()], checked against `n` and `alpha` as
+#'   described for [exact_conditional_power()]. In
+#'   `conditional_power_grid()` it is validated but not used when
+#'   `driver = 'asymptotic'`.
 #'
 #' @return An `(m + 1) x (m + 1)` matrix; entry `[x1 + 1, y1 + 1]`
 #'   is the current-trend conditional power at that interim state.
@@ -29,6 +33,9 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
                                    region = NULL) {
   driver <- match.arg(driver)
   stopifnot(m > 0, m < n)
+  # Validated before the asymptotic branch even though that branch does
+  # not use it, so a region built for another design is never accepted.
+  region <- check_region(region, n, alpha)
   if (driver == "asymptotic") {
     grid <- outer(0:m, 0:m, function(x1, y1) {
       # The normal approximation is undefined where the pooled interim
@@ -46,7 +53,6 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
     })
     return(stamp_cp_grid(grid, n, m, alpha, driver))
   }
-  check_region(region, n, alpha)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }
@@ -207,7 +213,7 @@ monitored_operating_characteristics <- function(n, m, tau,
                                                 region = NULL,
                                                 cp_grid = NULL) {
   driver <- match.arg(driver)
-  check_region(region, n, alpha)
+  region <- check_region(region, n, alpha)
   cp_grid <- check_cp_grid(cp_grid, n, m, alpha, driver)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
@@ -255,9 +261,9 @@ monitored_size <- function(n, m, tau, null_rates, alpha = 0.05,
                            driver = c("exact", "asymptotic"),
                            region = NULL, cp_grid = NULL) {
   driver <- match.arg(driver)
-  check_region(region, n, alpha)
-  # Checked once here; the stamped copy keeps the per-rate calls below
+  # Checked once here; the stamped copies keep the per-rate calls below
   # from repeating a missing-attribute warning.
+  region <- check_region(region, n, alpha)
   cp_grid <- check_cp_grid(cp_grid, n, m, alpha, driver)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)

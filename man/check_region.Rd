@@ -16,14 +16,24 @@ caller.}
 caller.}
 }
 \value{
-\code{region} unchanged, invisibly, if it is consistent with \code{n}
-and \code{alpha}. Errors otherwise.
+\code{region}, invisibly, with any missing attributes filled in
+from the call. \code{NULL} if \code{region} is \code{NULL}. Errors on mismatch.
 }
 \description{
 Internal helper. A region built by \code{\link[=fisher_rejection_region]{fisher_rejection_region()}}
 records the \code{n} and \code{alpha} it was constructed with. When a caller
-supplies a precomputed region, those attributes are checked against
-the arguments of the call, so that a region built at one
-significance level cannot silently be used at another.
+supplies a precomputed region, its dimensions and those attributes
+are checked against the arguments of the call, so that a region
+built for one design or significance level cannot silently be used
+for another.
+}
+\details{
+A region that is not a logical \verb{(n + 1) x (n + 1)} matrix, or one whose
+recorded attributes disagree with the call, is an error. A region
+that lacks some or all of the attributes (built by hand, or one
+whose attributes were dropped, for example by subsetting or
+\code{matrix()}) cannot be checked; it is accepted with a warning, and
+the returned copy is stamped with the requested values so that
+nested calls do not warn again.
 }
 \keyword{internal}

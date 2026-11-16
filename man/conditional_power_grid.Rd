@@ -22,7 +22,11 @@ interim analysis, \verb{0 < m < n}.}
 
 \item{driver}{Character. \code{'exact'} or \code{'asymptotic'}.}
 
-\item{region}{Optional precomputed rejection region.}
+\item{region}{Optional precomputed rejection region from
+\code{\link[=fisher_rejection_region]{fisher_rejection_region()}}, checked against \code{n} and \code{alpha} as
+described for \code{\link[=exact_conditional_power]{exact_conditional_power()}}. In
+\code{conditional_power_grid()} it is validated but not used when
+\code{driver = 'asymptotic'}.}
 }
 \value{
 An \verb{(m + 1) x (m + 1)} matrix; entry \verb{[x1 + 1, y1 + 1]}
