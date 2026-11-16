@@ -23,6 +23,35 @@
   `driver = "asymptotic"` now requires `driver = "asymptotic"` in the
   call as well; previously the `driver` argument was ignored whenever
   a grid was supplied.
+* **A precomputed `region` was checked less strictly than `cp_grid`.**
+  `check_region()` compared only the row count and, when present, the
+  recorded `alpha`. A region whose `alpha` attribute had been dropped
+  (for example by `matrix()` or subsetting) was accepted silently at
+  any `alpha`: a 0.05 region stripped of attributes and used with
+  `alpha = 0.01` in `exact_conditional_power(60, 2, 5, 0.03, 0.12)`
+  returned 0.660 rather than 0.284. A region with the right number of
+  rows but an extra column, or one whose recorded `n` disagreed with
+  the call, was also accepted. `check_region()` now follows the same
+  policy as `check_cp_grid()`: a region that is not an
+  `(n + 1) x (n + 1)` matrix, or whose recorded `n` or `alpha`
+  disagrees with the call, is an error; a region without these
+  attributes draws a single warning and is used as given.
+* User-visible change: hand-built or attribute-stripped regions now
+  warn (once per top-level call), and non-square or non-matrix regions
+  now fail with a clear message instead of "subscript out of bounds"
+  or a silently wrong answer.
+* **A numeric 0/1 region gave a silently wrong answer.**
+  `exact_conditional_power_pb()` indexes the outcome mass by
+  `mass[region]`, so a numeric region was read as positional indices
+  rather than as a membership mask. `check_region()` now requires a
+  logical matrix, as returned by `fisher_rejection_region()`; no
+  example or test in the package builds a numeric region.
+* **`conditional_power_grid(driver = "asymptotic")` skipped the region
+  check.** The asymptotic branch returned before `check_region()` ran,
+  so a region built at another `n` or `alpha` was accepted. That
+  branch does not use the region, so the value was unaffected, but the
+  mismatch went unreported. The region is now validated for both
+  drivers.
 
 # zzcondpower 0.4.0
 
