@@ -1,3 +1,29 @@
+# zzcondpower 0.4.0.9000
+
+## Correctness fixes
+
+* **A precomputed `cp_grid` silently overrode `alpha` and the other
+  design arguments.** `monitored_operating_characteristics()` and
+  `monitored_size()` accept a conditional-power grid to avoid
+  recomputation, but never checked it against the call. A grid built
+  at `alpha = 0.05` used with `alpha = 0.01` (n = 50, m = 20,
+  tau = 0.1, rates 0.05 and 0.10) returned a stopping probability of
+  0.632 and rejection probability of 0.0291 rather than the correct
+  0.723 and 0.0276, with no warning. A grid built for a different `n`
+  or with a different `driver` was likewise accepted.
+  `conditional_power_grid()` now records `n`, `m`, `alpha` and
+  `driver` as attributes, and a new internal `check_cp_grid()`
+  validates them at both entry points. A mismatch is an error. A grid
+  of the wrong dimensions is now a clear error rather than
+  "non-conformable arrays".
+* Grids without these attributes (built by hand, or by 0.4.0 and
+  earlier) are still accepted, with a single warning, because they
+  cannot be checked. Rebuild such grids to enable the check.
+* User-visible change: passing a grid built with
+  `driver = "asymptotic"` now requires `driver = "asymptotic"` in the
+  call as well; previously the `driver` argument was ignored whenever
+  a grid was supplied.
+
 # zzcondpower 0.4.0
 
 ## Correctness fixes

@@ -49,7 +49,8 @@ expect_true(
 ## (its conditional power is optimistic).
 cpa <- conditional_power_grid(n, m, driver = "asymptotic")
 oca <- monitored_operating_characteristics(
-  n, m, tau = 0.2, 0.10, 0.20, region = region, cp_grid = cpa
+  n, m, tau = 0.2, 0.10, 0.20, driver = "asymptotic",
+  region = region, cp_grid = cpa
 )
 expect_true(oca$stop < oc$stop,
             info = "asymptotic driver stops less often")

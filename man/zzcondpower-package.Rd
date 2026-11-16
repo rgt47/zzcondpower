@@ -43,6 +43,14 @@ rejection region across repeated calls. A region records the \code{n} and
 \code{alpha} it was built with, and supplying one that disagrees with the
 arguments of the call is an error rather than a silent override.
 Supplying a region does not change the significance level.
+
+The same applies to the \code{cp_grid} argument of
+\code{\link[=monitored_operating_characteristics]{monitored_operating_characteristics()}} and \code{\link[=monitored_size]{monitored_size()}}. A
+grid from \code{\link[=conditional_power_grid]{conditional_power_grid()}} records \code{n}, \code{m}, \code{alpha} and
+\code{driver}; a grid that disagrees with the call is an error, and a
+grid that lacks them (built by hand or by zzcondpower
+0.4.0 or earlier) is accepted with a warning because it cannot be
+checked.
 }
 
 \seealso{

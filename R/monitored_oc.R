@@ -17,6 +17,10 @@
 #'
 #' @return An `(m + 1) x (m + 1)` matrix; entry `[x1 + 1, y1 + 1]`
 #'   is the current-trend conditional power at that interim state.
+#'   Attributes `n`, `m`, `alpha` and `driver` record the construction
+#'   inputs; [monitored_operating_characteristics()] and
+#'   [monitored_size()] check them when the grid is supplied as
+#'   `cp_grid`.
 #'
 #' @export
 conditional_power_grid <- function(n, m, alpha = 0.05,
@@ -40,7 +44,7 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
                                        alpha)
       )
     })
-    return(grid)
+    return(stamp_cp_grid(grid, n, m, alpha, driver))
   }
   check_region(region, n, alpha)
   if (is.null(region)) {
@@ -59,7 +63,79 @@ conditional_power_grid <- function(n, m, alpha = 0.05,
         sum(v[(y1:(y1 + k)) + 1L] * py[[y1 + 1L]])
     }
   }
+  stamp_cp_grid(grid, n, m, alpha, driver)
+}
+
+stamp_cp_grid <- function(grid, n, m, alpha, driver) {
+  attr(grid, "n") <- n
+  attr(grid, "m") <- m
+  attr(grid, "alpha") <- alpha
+  attr(grid, "driver") <- driver
   grid
+}
+
+#' Validate a supplied conditional-power grid against its intended use
+#'
+#' Internal helper. A grid built by [conditional_power_grid()] records
+#' the `n`, `m`, `alpha` and `driver` it was constructed with. When a
+#' caller supplies a precomputed grid, its dimensions and those
+#' attributes are checked against the arguments of the call, so that a
+#' grid built for one design cannot silently be used for another.
+#'
+#' A grid of the wrong dimensions, or one whose recorded attributes
+#' disagree with the call, is an error. A grid that lacks some or all
+#' of the attributes (built by hand, or by zzcondpower 0.4.0 or
+#' earlier, which did not record them) cannot be checked; it is
+#' accepted with a warning, and the returned copy is stamped with the
+#' requested values so that nested calls do not warn again.
+#'
+#' @param cp_grid A conditional-power grid, or `NULL`.
+#' @param n,m,alpha,driver The design requested by the caller.
+#'
+#' @return `cp_grid`, invisibly, with any missing attributes filled in
+#'   from the call. `NULL` if `cp_grid` is `NULL`. Errors on mismatch.
+#' @keywords internal
+check_cp_grid <- function(cp_grid, n, m, alpha, driver) {
+  if (is.null(cp_grid)) {
+    return(invisible(NULL))
+  }
+  if (!is.matrix(cp_grid) || nrow(cp_grid) != m + 1L ||
+      ncol(cp_grid) != m + 1L) {
+    stop("`cp_grid` must be an (m + 1) x (m + 1) matrix; with `m` = ",
+         m, " that is ", m + 1L, " x ", m + 1L, ".", call. = FALSE)
+  }
+  requested <- list(n = n, m = m, alpha = alpha, driver = driver)
+  recorded <- lapply(names(requested), function(nm) {
+    attr(cp_grid, nm, exact = TRUE)
+  })
+  names(recorded) <- names(requested)
+  present <- !vapply(recorded, is.null, logical(1))
+  checkable <- names(requested)[present]
+  agrees <- vapply(checkable, function(nm) {
+    isTRUE(all.equal(recorded[[nm]], requested[[nm]]))
+  }, logical(1))
+  mismatched <- checkable[!agrees]
+  if (length(mismatched) > 0L) {
+    detail <- vapply(mismatched, function(nm) {
+      paste0(nm, " = ", recorded[[nm]], " (requested ",
+             requested[[nm]], ")")
+    }, character(1))
+    stop("`cp_grid` was built with ", paste(detail, collapse = ", "),
+         ". Supplying a grid does not override the design arguments; ",
+         "rebuild the grid or drop the argument.", call. = FALSE)
+  }
+  if (!all(present)) {
+    warning("`cp_grid` does not record ",
+            paste(names(requested)[!present], collapse = ", "),
+            ", so it cannot be checked against the call. Assuming it ",
+            "was built for the requested design; rebuild it with ",
+            "conditional_power_grid() to enable the check.",
+            call. = FALSE)
+    for (nm in names(requested)[!present]) {
+      attr(cp_grid, nm) <- requested[[nm]]
+    }
+  }
+  invisible(cp_grid)
 }
 
 # Vectorized body of halperin_conditional_power() without the
@@ -102,7 +178,11 @@ halperin_conditional_power_vec <- function(n, m, p_treatment,
 #' @param p_control Numeric. True control-arm event probability.
 #' @param cp_grid Optional precomputed matrix from
 #'   [conditional_power_grid()]; supplying it avoids recomputation
-#'   across thresholds and true-rate settings.
+#'   across thresholds and true-rate settings. It must have been built
+#'   with the same `n`, `m`, `alpha` and `driver` as the call: a grid
+#'   whose recorded values disagree is an error, and a grid that does
+#'   not record them (built by hand or by zzcondpower 0.4.0 or
+#'   earlier) is accepted with a warning.
 #'
 #' @return A list: `reject` (probability of final rejection with
 #'   the futility rule in force), `stop` (probability of stopping
@@ -128,6 +208,7 @@ monitored_operating_characteristics <- function(n, m, tau,
                                                 cp_grid = NULL) {
   driver <- match.arg(driver)
   check_region(region, n, alpha)
+  cp_grid <- check_cp_grid(cp_grid, n, m, alpha, driver)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }
@@ -175,6 +256,9 @@ monitored_size <- function(n, m, tau, null_rates, alpha = 0.05,
                            region = NULL, cp_grid = NULL) {
   driver <- match.arg(driver)
   check_region(region, n, alpha)
+  # Checked once here; the stamped copy keeps the per-rate calls below
+  # from repeating a missing-attribute warning.
+  cp_grid <- check_cp_grid(cp_grid, n, m, alpha, driver)
   if (is.null(region)) {
     region <- fisher_rejection_region(n, alpha)
   }

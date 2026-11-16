@@ -27,6 +27,10 @@ interim analysis, \verb{0 < m < n}.}
 \value{
 An \verb{(m + 1) x (m + 1)} matrix; entry \verb{[x1 + 1, y1 + 1]}
 is the current-trend conditional power at that interim state.
+Attributes \code{n}, \code{m}, \code{alpha} and \code{driver} record the construction
+inputs; \code{\link[=monitored_operating_characteristics]{monitored_operating_characteristics()}} and
+\code{\link[=monitored_size]{monitored_size()}} check them when the grid is supplied as
+\code{cp_grid}.
 }
 \description{
 Computes, for every interim state \eqn{(x_1, y_1)} of a design

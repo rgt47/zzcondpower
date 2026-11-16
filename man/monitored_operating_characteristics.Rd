@@ -38,7 +38,11 @@ probability used for the enumeration.}
 
 \item{cp_grid}{Optional precomputed matrix from
 \code{\link[=conditional_power_grid]{conditional_power_grid()}}; supplying it avoids recomputation
-across thresholds and true-rate settings.}
+across thresholds and true-rate settings. It must have been built
+with the same \code{n}, \code{m}, \code{alpha} and \code{driver} as the call: a grid
+whose recorded values disagree is an error, and a grid that does
+not record them (built by hand or by zzcondpower 0.4.0 or
+earlier) is accepted with a warning.}
 }
 \value{
 A list: \code{reject} (probability of final rejection with
