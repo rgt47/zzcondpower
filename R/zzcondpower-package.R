@@ -32,6 +32,14 @@
 #' `alpha` it was built with, and supplying one that disagrees with the
 #' arguments of the call is an error rather than a silent override.
 #' Supplying a region does not change the significance level.
+#'
+#' The same applies to the `cp_grid` argument of
+#' [monitored_operating_characteristics()] and [monitored_size()]. A
+#' grid from [conditional_power_grid()] records `n`, `m`, `alpha` and
+#' `driver`; a grid that disagrees with the call is an error, and a
+#' grid that lacks them (built by hand or by zzcondpower
+#' 0.4.0 or earlier) is accepted with a warning because it cannot be
+#' checked.
 "_PACKAGE"
 
 ## usethis namespace: start
